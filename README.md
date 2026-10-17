@@ -102,28 +102,65 @@ We reverse-engineered three official Shiprocket codebases to ensure 100% protoco
 
 ---
 
-## 4. Quick Start
+## 4. Credentials & Quick Start
+
+> **Important Security Note**: You **never** pass your Shiprocket email, password, or Fastrr secret keys to React frontend components (doing so would expose your credentials in the browser's Network tab).
+> Instead, credentials live **only on your server** (`.env` / `.env.local`) and are loaded by `ShiprocketServerClient` (`shiprocket-react/server`). Your React components (`shiprocket-react`) simply talk to your backend route (`/api/shiprocket`).
+
+### Step 1: Where to Get Your Shiprocket Credentials
+
+1. **Shiprocket Shipping API User (`SHIPROCKET_API_EMAIL` & `SHIPROCKET_API_PASSWORD`)**:
+   - Log into your [Shiprocket Dashboard](https://app.shiprocket.in) -> **Settings -> API -> Configure -> Create an API User**.
+   - *Note: Shiprocket requires you to create a dedicated API User email (different from your main Shiprocket login email).*
+2. **Warehouse Pickup Pincode & Location (`SHIPROCKET_PICKUP_PINCODE` & `SHIPROCKET_PICKUP_LOCATION`)**:
+   - Found in **Settings -> Pickup Addresses** (e.g., Pincode `110001` and Nickname `Primary`).
+3. **Fastrr Checkout Keys (`FASTRR_API_KEY` & `FASTRR_SECRET_KEY`)** *(Optional)*:
+   - Required only if you use official Fastrr 1-Click Checkout (`mode="fastrr"`) or 100M+ Buyer OTP Address Autofill (`enableFastrrAddressPrefill={true}`).
+   - Found in **Shiprocket Checkout (Fastrr) Dashboard -> Settings -> API Keys**.
+
+---
+
+### Step 2: How to Pass Your Credentials (`.env` vs Explicit Code)
+
+#### Way 1: Automatic `.env` / `.env.local` Loading (Recommended)
+
+Copy [`.env.example`](./.env.example) to `.env` (or `.env.local` in Next.js):
+
+```env
+# Required: Shiprocket Shipping API User
+SHIPROCKET_API_EMAIL=api-user@yourdomain.com
+SHIPROCKET_API_PASSWORD=your_shiprocket_api_password
+SHIPROCKET_PICKUP_PINCODE=110001
+SHIPROCKET_PICKUP_LOCATION=Primary
+
+# Optional: Fastrr 1-Click Checkout & OTP Address Autofill
+FASTRR_API_KEY=your_fastrr_api_key
+FASTRR_SECRET_KEY=your_fastrr_hmac_secret_key
+
+# Optional: Webhook verification secret
+SHIPROCKET_WEBHOOK_SECRET=your_webhook_secret_token
+```
+
+`ShiprocketServerClient` **automatically reads these environment variables**, so you can initialize it with zero boilerplate!
+
+#### Way 2: Explicit Config Object (Multi-Tenant / Database Credentials)
+
+If you run a multi-vendor marketplace where each seller's Shiprocket credentials are stored in a database, pass them explicitly to `new ShiprocketServerClient({ ... })`:
+
+---
 
 ### Option A: Next.js App Router (`app/api/shiprocket/[...action]/route.ts`)
 
 ```ts
 import { ShiprocketServerClient, createNextRouteHandler } from 'shiprocket-react/server';
 
+// Automatically loads SHIPROCKET_API_EMAIL, SHIPROCKET_API_PASSWORD, FASTRR_*, etc. from process.env!
+// You can also pass any field explicitly to override process.env:
 const shiprocket = new ShiprocketServerClient({
-  email: process.env.SHIPROCKET_API_EMAIL!,
-  password: process.env.SHIPROCKET_API_PASSWORD!,
-  defaultPickupPincode: '110001',
-  defaultPickupLocation: 'Primary',
   fallbackRate: 60, // Fallback shipping rate (₹) if Shiprocket API is unreachable
-  fastrr: {
-    apiKey: process.env.FASTRR_API_KEY!,
-    secretKey: process.env.FASTRR_SECRET_KEY!,
-  },
 });
 
 export const { GET, POST } = createNextRouteHandler(shiprocket, {
-  webhookSecret: process.env.SHIPROCKET_WEBHOOK_SECRET,
-  fastrrSecretKey: process.env.FASTRR_SECRET_KEY,
   onWebhook: async (event) => {
     console.log('Shiprocket Webhook update:', event.awb, event.current_status);
   },
@@ -139,16 +176,16 @@ import { ShiprocketServerClient, createExpressMiddleware } from 'shiprocket-reac
 const app = express();
 app.use(express.json());
 
+// Pass credentials explicitly or let it auto-read from process.env
 const shiprocket = new ShiprocketServerClient({
-  email: process.env.SHIPROCKET_API_EMAIL!,
-  password: process.env.SHIPROCKET_API_PASSWORD!,
+  email: process.env.SHIPROCKET_API_EMAIL,
+  password: process.env.SHIPROCKET_API_PASSWORD,
   defaultPickupPincode: '110001',
   defaultPickupLocation: 'Primary',
   fallbackRate: 60,
 });
 
 app.use('/api/shiprocket', createExpressMiddleware(shiprocket, {
-  webhookSecret: process.env.SHIPROCKET_WEBHOOK_SECRET,
   onWebhook: async (event) => {
     console.log('Webhook received:', event.order_id, event.current_status);
   },
