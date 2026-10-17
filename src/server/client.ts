@@ -327,24 +327,36 @@ export class ShiprocketServerClient {
   private tokenExpiresAt = 0;
   private fetchImpl: typeof fetch;
 
-  constructor(config: ShiprocketServerConfig, customFetch?: typeof fetch) {
-    if (!config.sandbox && (!config.email || !config.password)) {
+  constructor(config: ShiprocketServerConfig = {}, customFetch?: typeof fetch) {
+    const env = typeof process !== 'undefined' && process.env ? process.env : {};
+    const resolvedEmail = config.email ?? env.SHIPROCKET_API_EMAIL;
+    const resolvedPassword = config.password ?? env.SHIPROCKET_API_PASSWORD;
+    const resolvedFastrr =
+      config.fastrr ??
+      (env.FASTRR_API_KEY && env.FASTRR_SECRET_KEY
+        ? { apiKey: env.FASTRR_API_KEY, secretKey: env.FASTRR_SECRET_KEY }
+        : config.sandbox
+          ? { apiKey: 'sandbox-fastrr-key', secretKey: 'sandbox-fastrr-secret' }
+          : undefined);
+
+    if (!config.sandbox && (!resolvedEmail || !resolvedPassword)) {
       throw new Error(
-        'ShiprocketServerClient requires both `email` and `password` for API authentication (or set `sandbox: true`).'
+        'ShiprocketServerClient requires `email` and `password` (via config or process.env.SHIPROCKET_API_EMAIL / SHIPROCKET_API_PASSWORD), or set `sandbox: true`.'
       );
     }
     this.config = {
       ...config,
-      email: config.email || 'sandbox@shiprocket.local',
-      password: config.password || 'sandbox',
-      defaultPickupPincode: config.defaultPickupPincode ?? (config.sandbox ? '110001' : undefined),
-      fastrr:
-        config.fastrr ??
-        (config.sandbox
-          ? { apiKey: 'sandbox-fastrr-key', secretKey: 'sandbox-fastrr-secret' }
-          : undefined),
+      email: resolvedEmail || 'sandbox@shiprocket.local',
+      password: resolvedPassword || 'sandbox',
+      defaultPickupPincode:
+        config.defaultPickupPincode ??
+        env.SHIPROCKET_PICKUP_PINCODE ??
+        (config.sandbox ? '110001' : undefined),
+      fastrr: resolvedFastrr,
+      webhookSecret: config.webhookSecret ?? env.SHIPROCKET_WEBHOOK_SECRET,
       baseUrl: (config.baseUrl ?? DEFAULT_BASE_URL).replace(/\/+$/, ''),
-      defaultPickupLocation: config.defaultPickupLocation ?? 'Primary',
+      defaultPickupLocation:
+        config.defaultPickupLocation ?? env.SHIPROCKET_PICKUP_LOCATION ?? 'Primary',
     };
     this.fetchImpl =
       customFetch ?? (config.sandbox ? createSandboxFetch() : globalThis.fetch.bind(globalThis));

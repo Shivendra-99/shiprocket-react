@@ -5,13 +5,13 @@
 export type CheckoutMode = 'fastrr' | 'builtin';
 
 export interface ShiprocketServerConfig {
-  /** Shiprocket API User email (created in Settings -> API -> Configure) */
-  email: string;
-  /** Shiprocket API User password */
-  password: string;
-  /** Default warehouse pickup pincode (6 digits) used when not passed per request */
+  /** Shiprocket API User email (defaults to process.env.SHIPROCKET_API_EMAIL) */
+  email?: string;
+  /** Shiprocket API User password (defaults to process.env.SHIPROCKET_API_PASSWORD) */
+  password?: string;
+  /** Default warehouse pickup pincode (defaults to process.env.SHIPROCKET_PICKUP_PINCODE) */
   defaultPickupPincode?: string;
-  /** Default pickup location name configured in Shiprocket (e.g. "Primary") */
+  /** Default pickup location name configured in Shiprocket (defaults to process.env.SHIPROCKET_PICKUP_LOCATION or "Primary") */
   defaultPickupLocation?: string;
   /** Base URL for Shiprocket Shipping API (defaults to https://apiv2.shiprocket.in/v1/external) */
   baseUrl?: string;
