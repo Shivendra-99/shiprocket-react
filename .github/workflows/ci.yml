@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+  packages: write
+
 jobs:
   test-and-build:
     runs-on: ubuntu-latest
@@ -18,6 +22,8 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@shivendra-99'
 
       - name: Install dependencies
         run: npm ci
@@ -30,3 +36,17 @@ jobs:
 
       - name: Build production bundles (ESM, CJS, DTS)
         run: npm run build
+
+      - name: Publish to GitHub Packages (populates GitHub Packages sidebar)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          node -e '
+            const fs = require("fs");
+            const pkg = JSON.parse(fs.readFileSync("package.json", "utf8"));
+            pkg.name = "@shivendra-99/shiprocket-react";
+            pkg.publishConfig = { registry: "https://npm.pkg.github.com" };
+            fs.writeFileSync("package.json", JSON.stringify(pkg, null, 2));
+          '
+          npm publish --ignore-scripts || true

@@ -1,9 +1,10 @@
 # `shiprocket-react`
 
-[![npm version](https://img.shields.io/npm/v/shiprocket-react.svg?color=0f172a&label=npm)](https://www.npmjs.com/package/shiprocket-react)
-[![npm downloads](https://img.shields.io/npm/dt/shiprocket-react.svg?color=2563eb)](https://www.npmjs.com/package/shiprocket-react)
+[![npm version](https://img.shields.io/npm/v/shiprocket-react.svg?color=2563eb&label=npm)](https://www.npmjs.com/package/shiprocket-react)
 [![CI](https://github.com/Shivendra-99/shiprocket-react/actions/workflows/ci.yml/badge.svg)](https://github.com/Shivendra-99/shiprocket-react/actions)
-[![License: MIT](https://img.shields.io/badge/License-MIT-emerald.svg)](https://opensource.org/licenses/MIT)
+[![TypeScript](https://img.shields.io/badge/TypeScript-Ready-3178c6.svg)](https://www.typescriptlang.org/)
+[![React](https://img.shields.io/badge/React-17%20%7C%2018%20%7C%2019-087ea4.svg)](https://react.dev/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-10b981.svg)](https://opensource.org/licenses/MIT)
 
 A full-stack **React.js + Server SDK** that connects custom **React**, **Next.js**, and **Express** applications to **Shiprocket Shipping** and **Shiprocket Checkout (Fastrr & Built-in Express Checkout)** — built on top of protocol specifications reverse-engineered directly from Shiprocket's official **Shopify** and **WooCommerce** plugins.
 
