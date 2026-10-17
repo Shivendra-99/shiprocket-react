@@ -1,6 +1,6 @@
 {
   "name": "shiprocket-react",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Full-stack React.js + Server SDK for Shiprocket Shipping and Shiprocket Checkout (Fastrr & Built-in Headless Checkout)",
   "type": "module",
   "main": "./dist/index.cjs",
