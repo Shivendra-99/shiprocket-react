@@ -45,36 +45,39 @@ Shiprocket provides first-party plugins only for **Shopify**, **WooCommerce**, a
 ## 2. Architecture Overview
 
 ```mermaid
-flowchart LR
-    subgraph Browser["React / Next.js Client (shiprocket-react)"]
-        PC["<PincodeChecker />\nusePincodeCheck()"]
-        CB["<ShiprocketCheckoutButton />\nuseShiprocketCheckout()"]
-        OTP["useFastrrAddressPrefill()\n+ WebOTP SMS Auto-Read"]
-        OT["<OrderTrackingTimeline />\nuseOrderTracking()"]
+flowchart TD
+    subgraph Browser["1. React / Next.js Frontend (shiprocket-react)"]
+        PC["PincodeChecker\nusePincodeCheck()"]
+        CB["ShiprocketCheckoutButton\nuseShiprocketCheckout()"]
+        OTP["useFastrrAddressPrefill()\nWebOTP SMS Auto-Read"]
+        OT["OrderTrackingTimeline\nuseOrderTracking()"]
+        SP["ShiprocketProvider\n(apiBaseUrl: /api/shiprocket)"]
+
+        PC --> SP
+        CB --> SP
+        OTP --> SP
+        OT --> SP
     end
 
-    subgraph Server["Node / Next.js / Express Proxy (shiprocket-react/server)"]
-        RH["createNextRouteHandler()\ncreateExpressMiddleware()"]
-        SC["ShiprocketServerClient\n(9.5-Day JWT Cache + Box Stacking)"]
-        WH["verifyShiprocketWebhook()\n(Timing-Safe Base64 & Hex HMAC)"]
+    subgraph Server["2. Node / Next.js / Express Backend (shiprocket-react/server)"]
+        RH["Route Adapter\ncreateNextRouteHandler() / createExpressMiddleware()"]
+        SC["ShiprocketServerClient\n9.5-Day JWT Cache + Box Stacking + Fallback Rate"]
+        WH["verifyShiprocketWebhook()\nTiming-Safe Base64 & Hex HMAC"]
+
+        RH --> SC
     end
 
-    subgraph ShiprocketCloud["Shiprocket & Fastrr Cloud APIs"]
-        API["apiv2.shiprocket.in\n(Auth, Serviceability, Orders, AWB, Tracking)"]
-        FASTRR["checkout-api.shiprocket.com\n(S2S OTP Login, 100M+ Saved Addresses)"]
-        UPTIME["uptime2.fastrr.com/fe2\n(Health Check & Iframe Prefetch)"]
+    subgraph ShiprocketCloud["3. Shiprocket & Fastrr Cloud APIs"]
+        UPTIME["uptime2.fastrr.com/fe2\nLive Health Check & Prefetch"]
+        API["apiv2.shiprocket.in\nAuth, Serviceability, Orders, AWB, Tracking"]
+        FASTRR["checkout-api.shiprocket.com\nS2S OTP Login & 100M+ Saved Addresses"]
     end
 
-    PC -->|GET ?action=serviceability| RH
-    CB -->|POST createOrder / fastrrCheckout| RH
-    OTP -->|POST fastrrOtpInitiate / Verify| RH
-    OT -->|GET ?action=track| RH
-    CB -.->|Health Check & Prefetch| UPTIME
-
-    RH --> SC
-    SC -->|Bearer JWT| API
-    SC -->|X-Api-Key + Base64 X-Api-HMAC-SHA256| FASTRR
-    API -->|Webhook Events| WH
+    SP -->|"GET & POST /api/shiprocket"| RH
+    CB -.->|"1. Uptime Check"| UPTIME
+    SC -->|"2. Bearer JWT"| API
+    SC -->|"3. Base64 X-Api-HMAC-SHA256"| FASTRR
+    API -.->|"4. Webhook Events"| WH
 ```
 
 ---
